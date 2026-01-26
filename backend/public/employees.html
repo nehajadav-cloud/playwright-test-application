@@ -1,473 +1,196 @@
 <!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Employee Portal - Employees</title>
-    <style>
-      :root {
-        --bg: #f7f8fc;
-        --card: #fff;
-        --text: #1f2937;
-        --muted: #6b7280;
-        --line: #e5e7eb;
-        --accent: #2563eb;
-        --danger: #b00020;
-      }
-      body { font-family: Arial, sans-serif; margin: 32px; color: var(--text); background: var(--bg); }
-      header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
-      h1 { margin: 0; }
-      .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
-      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
-      .row > * { margin: 4px 0; }
-      .muted { color: var(--muted); }
-      .error { color: var(--danger); margin: 8px 0; }
-      .success { color: #0f7a4f; margin: 8px 0; }
-      input, select { padding: 6px 8px; }
-      button { padding: 8px 12px; cursor: pointer; }
-      button[disabled] { opacity: 0.5; cursor: not-allowed; }
-      table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-      th, td { text-align: left; border-bottom: 1px solid var(--line); padding: 8px; }
-      th button { background: none; border: none; color: var(--text); font-weight: 700; padding: 0; cursor: pointer; }
-      .pill { background: #eef2ff; color: #3730a3; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
-      .actions { display: flex; gap: 8px; }
-      .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
-      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
-    </style>
-  </head>
-  <body>
-    <header>
-      <div>
-        <h1>Employees</h1>
-        <div class="muted" id="userInfo" data-testid="user-info">Loading user...</div>
-      </div>
-      <div class="row">\n        <a href="/" data-testid="nav-login">Login</a>\n        <a href="/docs" data-testid="nav-docs">Docs</a>\n        <button id="logoutBtn" type="button" data-testid="logout">Logout</button>\n      </div>
-    </header>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Employees</title>
+  <style>
+    body { font-family: Arial; padding: 30px; }
+    .top { display:flex; align-items:center; gap: 12px; }
+    table { width:100%; border-collapse: collapse; margin-top: 16px; }
+    th, td { border-bottom: 1px solid #eee; padding: 10px; text-align:left; }
+    .rowActions button { margin-right: 6px; }
+    .card { border:1px solid #ddd; border-radius: 10px; padding: 12px; margin-top: 16px; }
+    .grid { display:grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    label { display:block; font-size: 12px; color: #444; }
+    input, select { width:100%; padding: 8px; margin-top: 4px; }
+    .error { color:#b00020; margin-top: 8px; }
+    .hidden { display:none; }
+  </style>
+</head>
+<body>
+  <h2>Employees</h2>
+
+  <div class="top">
+    <input id="search" placeholder="Search..." aria-label="Search"/>
+    <button id="refreshBtn">Refresh</button>
+    <button id="logoutBtn">Logout</button>
+  </div>
+
+  <div class="card">
+    <h3 id="formTitle">Add Employee</h3>
 
     <div class="grid">
-      <section class="card" data-testid="filters-card">
-        <div class="row">
-          <input id="search" type="search" placeholder="Search" data-testid="search" />
-          <select id="statusFilter" data-testid="status-filter">
-            <option value="">All status</option>
-            <option value="Active">Active</option>
-            <option value="Inactive">Inactive</option>
-            <option value="On Leave">On Leave</option>
-          </select>
-          <select id="pageSize" data-testid="page-size">
-            <option value="5">5 / page</option>
-            <option value="10" selected>10 / page</option>
-            <option value="20">20 / page</option>
-          </select>
-          <span class="muted" id="resultMeta" data-testid="result-meta"></span>
-        </div>
-        <div class="row" style="margin-top: 12px;">
-          <label class="muted">QA delay (ms): <input id="qaDelay" type="number" min="0" step="100" value="0" data-testid="qa-delay" /></label>
-          <label class="muted">QA fail: <input id="qaFail" type="checkbox" data-testid="qa-fail" /></label>
-          <label class="muted">Fail rate (0-1): <input id="qaFailRate" type="number" min="0" max="1" step="0.1" value="0" data-testid="qa-fail-rate" /></label>
-          <button id="qaSave" type="button" data-testid="qa-save">Save QA</button>
-          <span class="muted" id="qaStatus"></span>
-        </div>
-      </section>
+      <div><label>Employee ID</label><input id="id" aria-label="Employee ID" /></div>
+      <div><label>Name</label><input id="name" aria-label="Name" /></div>
+      <div><label>Email</label><input id="email" aria-label="Email" /></div>
 
-      <section class="card" data-testid="form-card">
-        <h2 id="formTitle">Add Employee</h2>
-        <div class="error" id="formError" role="alert" data-testid="form-error"></div>
-        <div class="success" id="formSuccess" data-testid="form-success"></div>
-        <form id="employeeForm" data-testid="employee-form">
-          <input type="hidden" id="formMode" value="create" />
-          <label>Employee ID <input id="empId" required data-testid="emp-id" /></label>
-          <label>Name <input id="empName" required data-testid="emp-name" /></label>
-          <label>Email <input id="empEmail" type="email" required data-testid="emp-email" /></label>
-          <label>Department <input id="empDept" required data-testid="emp-dept" /></label>
-          <label>Role <input id="empRole" required data-testid="emp-role" /></label>
-          <label>Status
-            <select id="empStatus" data-testid="emp-status">
-              <option value="Active">Active</option>
-              <option value="Inactive">Inactive</option>
-              <option value="On Leave">On Leave</option>
-            </select>
-          </label>
-          <div class="row" style="margin-top: 12px;">
-            <button type="submit" id="formSubmit" data-testid="form-submit">Create</button>
-            <button type="button" id="formCancel" data-testid="form-cancel" disabled>Cancel</button>
-          </div>
-        </form>
-      </section>
+      <div>
+        <label>Department</label>
+        <select id="dept" aria-label="Department">
+          <option>Engineering</option><option>Finance</option><option>HR</option><option>Sales</option><option>Operations</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Role</label>
+        <select id="role" aria-label="Role">
+          <option>Developer</option><option>Analyst</option><option>Recruiter</option><option>Manager</option><option>Support</option>
+        </select>
+      </div>
+
+      <div>
+        <label>Status</label>
+        <select id="status" aria-label="Status">
+          <option>Active</option><option>Inactive</option>
+        </select>
+      </div>
     </div>
 
-    <section class="card" style="margin-top: 16px;" data-testid="table-card">
-      <div class="row">
-        <button id="bulkDelete" type="button" data-testid="bulk-delete">Delete Selected</button>
-        <button id="bulkActivate" type="button" data-testid="bulk-activate">Set Active</button>
-        <button id="bulkInactive" type="button" data-testid="bulk-inactive">Set Inactive</button>
-      </div>
-      <div class="error" id="tableError" role="alert" data-testid="table-error"></div>
-      <table>
-        <thead>
-          <tr>
-            <th><input id="selectAll" type="checkbox" data-testid="select-all" /></th>
-            <th><button type="button" data-sort="id" data-testid="sort-id">ID</button></th>
-            <th><button type="button" data-sort="name" data-testid="sort-name">Name</button></th>
-            <th><button type="button" data-sort="email" data-testid="sort-email">Email</button></th>
-            <th><button type="button" data-sort="dept" data-testid="sort-dept">Department</button></th>
-            <th><button type="button" data-sort="role" data-testid="sort-role">Role</button></th>
-            <th><button type="button" data-sort="status" data-testid="sort-status">Status</button></th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="rows" data-testid="employee-rows"></tbody>
-      </table>
-      <div class="row" style="margin-top: 12px;">
-        <button id="prevPage" type="button" data-testid="prev-page">Prev</button>
-        <span id="pageInfo" class="muted" data-testid="page-info"></span>
-        <button id="nextPage" type="button" data-testid="next-page">Next</button>
-      </div>
-    </section>
+    <div style="margin-top:12px;">
+      <button id="saveBtn">Save</button>
+      <button id="cancelBtn" class="hidden">Cancel Edit</button>
+      <div class="error" id="err"></div>
+    </div>
+  </div>
 
-    <script>
-      const state = {
-        q: "",
-        status: "",
-        sortBy: "id",
-        sortDir: "asc",
-        page: 1,
-        pageSize: 10,
-        totalPages: 1,
-        selected: new Set(),
-        role: "",
-        username: "",
-        qaDelay: 0,
-        qaFail: false,
-        qaFailRate: 0,
-      };
+  <table aria-label="Employee Table">
+    <thead>
+      <tr>
+        <th>ID</th><th>Name</th><th>Email</th><th>Dept</th><th>Role</th><th>Status</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
 
-      const rowsEl = document.getElementById("rows");
-      const tableErrorEl = document.getElementById("tableError");
-      const formErrorEl = document.getElementById("formError");
-      const formSuccessEl = document.getElementById("formSuccess");
-      const pageInfoEl = document.getElementById("pageInfo");
-      const resultMetaEl = document.getElementById("resultMeta");
-      const userInfoEl = document.getElementById("userInfo");
-      const qaStatusEl = document.getElementById("qaStatus");
+<script>
+  let editingId = null;
+  const el = (id) => document.getElementById(id);
+  const err = el("err");
 
-      const form = document.getElementById("employeeForm");
-      const formModeEl = document.getElementById("formMode");
-      const formTitleEl = document.getElementById("formTitle");
-      const formSubmitEl = document.getElementById("formSubmit");
-      const formCancelEl = document.getElementById("formCancel");
+  async function api(path, opts={}) {
+    const res = await fetch(path, opts);
+    if (res.status === 401) location.href = "/";
+    return res;
+  }
 
-      function loadQaSettings() {
-        const saved = JSON.parse(localStorage.getItem("qaSettings") || "{}");
-        state.qaDelay = Number(saved.qaDelay || 0);
-        state.qaFail = Boolean(saved.qaFail);
-        state.qaFailRate = Number(saved.qaFailRate || 0);
-        document.getElementById("qaDelay").value = state.qaDelay;
-        document.getElementById("qaFail").checked = state.qaFail;
-        document.getElementById("qaFailRate").value = state.qaFailRate;
-      }
+  function setEditMode(on, row) {
+    editingId = on ? row.id : null;
 
-      function saveQaSettings() {
-        state.qaDelay = Number(document.getElementById("qaDelay").value || 0);
-        state.qaFail = Boolean(document.getElementById("qaFail").checked);
-        state.qaFailRate = Number(document.getElementById("qaFailRate").value || 0);
-        localStorage.setItem("qaSettings", JSON.stringify({
-          qaDelay: state.qaDelay,
-          qaFail: state.qaFail,
-          qaFailRate: state.qaFailRate
-        }));
-        qaStatusEl.textContent = "QA settings saved";
-        setTimeout(() => qaStatusEl.textContent = "", 1200);
-      }
+    el("formTitle").textContent = on ? `Edit Employee: ${row.id}` : "Add Employee";
+    el("cancelBtn").classList.toggle("hidden", !on);
+    el("id").disabled = on;
 
-      function apiFetch(url, options = {}) {
-        const headers = Object.assign({}, options.headers || {});
-        if (state.qaDelay > 0) headers["x-qa-delay"] = String(state.qaDelay);
-        if (state.qaFail) headers["x-qa-fail"] = "1";
-        if (state.qaFailRate > 0) headers["x-qa-fail-rate"] = String(state.qaFailRate);
-        return fetch(url, Object.assign({}, options, { headers }));
-      }
+    if (on) {
+      el("id").value = row.id;
+      el("name").value = row.name;
+      el("email").value = row.email;
+      el("dept").value = row.dept;
+      el("role").value = row.role;
+      el("status").value = row.status;
+    } else {
+      el("id").disabled = false;
+      el("id").value = "";
+      el("name").value = "";
+      el("email").value = "";
+      el("dept").value = "Engineering";
+      el("role").value = "Developer";
+      el("status").value = "Active";
+    }
+  }
 
-      function setAdminUiEnabled(enabled) {
-        document.getElementById("bulkDelete").disabled = !enabled;
-        document.getElementById("bulkActivate").disabled = !enabled;
-        document.getElementById("bulkInactive").disabled = !enabled;
-        formSubmitEl.disabled = !enabled;
-      }
+  async function load(q="") {
+    const res = await api(`/api/employees?q=${encodeURIComponent(q)}`);
+    const rows = await res.json();
+    const tbody = el("tbody");
+    tbody.innerHTML = "";
 
-      async function loadUser() {
-        const res = await apiFetch("/api/me");
-        if (!res.ok) {
-          window.location.href = "/";
-          return;
-        }
-        const data = await res.json();
-        state.role = data.role;
-        state.username = data.username;
-        userInfoEl.textContent = `Signed in as ${data.username} (${data.role})`;
-        setAdminUiEnabled(data.role === "admin");
-      }
+    rows.forEach(r => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td>${r.id}</td>
+        <td>${r.name}</td>
+        <td>${r.email}</td>
+        <td>${r.dept}</td>
+        <td>${r.role}</td>
+        <td>${r.status}</td>
+        <td class="rowActions">
+          <button data-edit="${r.id}">Edit</button>
+          <button data-del="${r.id}">Delete</button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+    });
 
-      function resetForm() {
-        formModeEl.value = "create";
-        formTitleEl.textContent = "Add Employee";
-        formSubmitEl.textContent = "Create";
-        formCancelEl.disabled = true;
-        form.reset();
-        formErrorEl.textContent = "";
-        formSuccessEl.textContent = "";
-      }
-
-      function setFormForEdit(employee) {
-        formModeEl.value = employee.id;
-        formTitleEl.textContent = "Edit Employee";
-        formSubmitEl.textContent = "Save";
-        formCancelEl.disabled = false;
-        document.getElementById("empId").value = employee.id;
-        document.getElementById("empName").value = employee.name;
-        document.getElementById("empEmail").value = employee.email;
-        document.getElementById("empDept").value = employee.dept;
-        document.getElementById("empRole").value = employee.role;
-        document.getElementById("empStatus").value = employee.status;
-      }
-
-      function renderRows(rows) {
-        if (!rows.length) {
-          rowsEl.innerHTML = "<tr><td colspan=\"8\">No employees found.</td></tr>";
-          return;
-        }
-        rowsEl.innerHTML = rows.map(e => {
-          const checked = state.selected.has(e.id) ? "checked" : "";
-          return `
-            <tr data-testid="row-${e.id}">
-              <td><input type="checkbox" data-id="${e.id}" ${checked} data-testid="row-select-${e.id}" /></td>
-              <td><a href="/employees/${e.id}" data-testid="employee-link-${e.id}">${e.id}</a></td>
-              <td>${e.name}</td>
-              <td>${e.email}</td>
-              <td>${e.dept}</td>
-              <td>${e.role}</td>
-              <td><span class="pill">${e.status}</span></td>
-              <td class="actions">
-                <button type="button" data-action="edit" data-id="${e.id}" data-testid="edit-${e.id}">Edit</button>
-                <button type="button" data-action="delete" data-id="${e.id}" data-testid="delete-${e.id}">Delete</button>
-              </td>
-            </tr>
-          `;
-        }).join("");
-      }
-
-      async function loadEmployees() {
-        tableErrorEl.textContent = "";
-        rowsEl.innerHTML = "<tr><td colspan=\"8\">Loading...</td></tr>";
-
-        const params = new URLSearchParams({
-          q: state.q,
-          status: state.status,
-          sortBy: state.sortBy,
-          sortDir: state.sortDir,
-          page: String(state.page),
-          pageSize: String(state.pageSize)
-        });
-
-        const res = await apiFetch(`/api/employees?${params.toString()}`);
-        if (res.status === 401) {
-          window.location.href = "/";
-          return;
-        }
-        if (!res.ok) {
-          tableErrorEl.textContent = "Failed to load employees";
-          rowsEl.innerHTML = "<tr><td colspan=\"8\">Error loading data.</td></tr>";
-          return;
-        }
-
-        const data = await res.json();
-        state.totalPages = data.totalPages || 1;
-        resultMetaEl.textContent = `Total: ${data.total}`;
-        pageInfoEl.textContent = `Page ${data.page} of ${state.totalPages}`;
-        renderRows(data.rows || []);
-      }
-
-      async function handleFormSubmit(e) {
-        e.preventDefault();
-        formErrorEl.textContent = "";
-        formSuccessEl.textContent = "";
-
-        if (state.role !== "admin") {
-          formErrorEl.textContent = "Admin role required";
-          return;
-        }
-
-        const payload = {
-          id: document.getElementById("empId").value.trim(),
-          name: document.getElementById("empName").value.trim(),
-          email: document.getElementById("empEmail").value.trim(),
-          dept: document.getElementById("empDept").value.trim(),
-          role: document.getElementById("empRole").value.trim(),
-          status: document.getElementById("empStatus").value
-        };
-
-        if (!payload.id || !payload.name || !payload.email || !payload.dept || !payload.role || !payload.status) {
-          formErrorEl.textContent = "All fields are required";
-          return;
-        }
-
-        const editingId = formModeEl.value === "create" ? null : formModeEl.value;
-        const url = editingId ? `/api/employees/${editingId}` : "/api/employees";
-        const method = editingId ? "PUT" : "POST";
-
-        const res = await apiFetch(url, {
-          method,
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        });
-
-        if (!res.ok) {
-          const data = await res.json().catch(() => ({}));
-          formErrorEl.textContent = data.error || "Save failed";
-          return;
-        }
-
-        formSuccessEl.textContent = editingId ? "Employee updated" : "Employee created";
-        resetForm();
-        loadEmployees();
-      }
-
-      async function handleRowAction(e) {
-        const btn = e.target.closest("button");
-        if (!btn) return;
-        const action = btn.dataset.action;
-        const id = btn.dataset.id;
-
-        if (action === "edit") {
-          const res = await apiFetch(`/api/employees/${id}`);
-          if (res.ok) {
-            const data = await res.json();
-            setFormForEdit(data);
-          }
-          return;
-        }
-
-        if (action === "delete") {
-          if (state.role !== "admin") {
-            tableErrorEl.textContent = "Admin role required";
-            return;
-          }
-          if (!confirm(`Delete ${id}?`)) return;
-          const res = await apiFetch(`/api/employees/${id}`, { method: "DELETE" });
-          if (!res.ok) {
-            tableErrorEl.textContent = "Delete failed";
-            return;
-          }
-          state.selected.delete(id);
-          loadEmployees();
-        }
-      }
-
-      function toggleSelection(e) {
-        const checkbox = e.target;
-        if (!checkbox || !checkbox.dataset.id) return;
-        if (checkbox.checked) state.selected.add(checkbox.dataset.id);
-        else state.selected.delete(checkbox.dataset.id);
-      }
-
-      function toggleSelectAll(e) {
-        const checked = e.target.checked;
-        document.querySelectorAll("tbody input[type=checkbox][data-id]").forEach(cb => {
-          cb.checked = checked;
-          if (checked) state.selected.add(cb.dataset.id);
-          else state.selected.delete(cb.dataset.id);
-        });
-      }
-
-      async function bulkAction(action, status) {
-        if (state.role !== "admin") {
-          tableErrorEl.textContent = "Admin role required";
-          return;
-        }
-        const ids = Array.from(state.selected);
-        if (!ids.length) {
-          tableErrorEl.textContent = "Select at least one employee";
-          return;
-        }
-        const res = await apiFetch("/api/employees/bulk", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action, ids, status })
-        });
-        if (!res.ok) {
-          tableErrorEl.textContent = "Bulk action failed";
-          return;
-        }
-        state.selected.clear();
-        document.getElementById("selectAll").checked = false;
-        loadEmployees();
-      }
-
-      document.getElementById("search").addEventListener("input", (e) => {
-        state.q = e.target.value.trim();
-        state.page = 1;
-        clearTimeout(window.__searchTimer);
-        window.__searchTimer = setTimeout(loadEmployees, 200);
+    tbody.querySelectorAll("button[data-edit]").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.getAttribute("data-edit");
+        const row = rows.find(x => x.id === id);
+        setEditMode(true, row);
       });
+    });
 
-      document.getElementById("statusFilter").addEventListener("change", (e) => {
-        state.status = e.target.value;
-        state.page = 1;
-        loadEmployees();
+    tbody.querySelectorAll("button[data-del]").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-del");
+        if (!confirm(`Delete ${id}?`)) return;
+        await api(`/api/employees/${id}`, { method: "DELETE" });
+        await load(el("search").value.trim());
       });
+    });
+  }
 
-      document.getElementById("pageSize").addEventListener("change", (e) => {
-        state.pageSize = Number(e.target.value);
-        state.page = 1;
-        loadEmployees();
-      });
+  el("refreshBtn").addEventListener("click", () => load(el("search").value.trim()));
+  el("search").addEventListener("input", () => load(el("search").value.trim()));
 
-      document.getElementById("prevPage").addEventListener("click", () => {
-        if (state.page > 1) {
-          state.page -= 1;
-          loadEmployees();
-        }
-      });
+  el("logoutBtn").addEventListener("click", async () => {
+    await api("/api/logout", { method:"POST" });
+    location.href = "/";
+  });
 
-      document.getElementById("nextPage").addEventListener("click", () => {
-        if (state.page < state.totalPages) {
-          state.page += 1;
-          loadEmployees();
-        }
-      });
+  el("cancelBtn").addEventListener("click", () => setEditMode(false));
 
-      document.querySelectorAll("th button[data-sort]").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const key = btn.dataset.sort;
-          if (state.sortBy === key) state.sortDir = state.sortDir === "asc" ? "desc" : "asc";
-          else state.sortBy = key;
-          loadEmployees();
-        });
-      });
+  el("saveBtn").addEventListener("click", async () => {
+    err.textContent = "";
 
-      rowsEl.addEventListener("click", handleRowAction);
-      rowsEl.addEventListener("change", toggleSelection);
-      document.getElementById("selectAll").addEventListener("change", toggleSelectAll);
+    const payload = {
+      id: el("id").value.trim(),
+      name: el("name").value.trim(),
+      email: el("email").value.trim(),
+      dept: el("dept").value,
+      role: el("role").value,
+      status: el("status").value
+    };
 
-      form.addEventListener("submit", handleFormSubmit);
-      formCancelEl.addEventListener("click", resetForm);
+    const method = editingId ? "PUT" : "POST";
+    const url = editingId ? `/api/employees/${editingId}` : "/api/employees";
 
-      document.getElementById("bulkDelete").addEventListener("click", () => bulkAction("delete"));
-      document.getElementById("bulkActivate").addEventListener("click", () => bulkAction("status", "Active"));
-      document.getElementById("bulkInactive").addEventListener("click", () => bulkAction("status", "Inactive"));
+    const res = await api(url, {
+      method,
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(payload)
+    });
 
-      document.getElementById("logoutBtn").addEventListener("click", async () => {
-        await apiFetch("/api/logout", { method: "POST" });
-        window.location.href = "/";
-      });
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({error:"Save failed"}));
+      err.textContent = j.error || "Save failed";
+      return;
+    }
 
-      document.getElementById("qaSave").addEventListener("click", saveQaSettings);
+    setEditMode(false);
+    await load(el("search").value.trim());
+  });
 
-      loadQaSettings();
-      loadUser();
-      loadEmployees();
-    </script>
-  </body>
+  load();
+</script>
+</body>
 </html>
-
-
