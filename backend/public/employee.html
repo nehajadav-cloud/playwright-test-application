@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employee Portal - Employee</title>
+    <style>
+      :root {
+        --bg: #f7f8fc;
+        --card: #fff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --danger: #b00020;
+      }
+      body { font-family: Arial, sans-serif; margin: 32px; color: var(--text); background: var(--bg); }
+      header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.05); }
+      .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+      .error { color: var(--danger); margin: 8px 0; }
+      .muted { color: var(--muted); }
+      input, select { padding: 6px 8px; }
+      button { padding: 8px 12px; cursor: pointer; }
+      button[disabled] { opacity: 0.5; cursor: not-allowed; }
+      .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <h1>Employee</h1>
+        <div class="muted" id="userInfo" data-testid="user-info">Loading user...</div>
+      </div>
+      <div class="row">\n        <a href="/employees" data-testid="back-list">Back to list</a>\n        <a href="/docs" data-testid="nav-docs">Docs</a>\n        <button id="logoutBtn" type="button" data-testid="logout">Logout</button>\n      </div>
+    </header>
+
+    <div class="grid">
+      <section class="card" data-testid="details-card">
+        <h2>Details</h2>
+        <div class="error" id="detailsError" role="alert" data-testid="details-error"></div>
+        <div id="details" data-testid="details"></div>
+      </section>
+
+      <section class="card" data-testid="edit-card">
+        <h2>Edit</h2>
+        <div class="error" id="formError" role="alert" data-testid="form-error"></div>
+        <form id="editForm" data-testid="edit-form">
+          <label>Employee ID <input id="empId" required data-testid="emp-id" /></label>
+          <label>Name <input id="empName" required data-testid="emp-name" /></label>
+          <label>Email <input id="empEmail" type="email" required data-testid="emp-email" /></label>
+          <label>Department <input id="empDept" required data-testid="emp-dept" /></label>
+          <label>Role <input id="empRole" required data-testid="emp-role" /></label>
+          <label>Status
+            <select id="empStatus" data-testid="emp-status">
+              <option value="Active">Active</option>
+              <option value="Inactive">Inactive</option>
+              <option value="On Leave">On Leave</option>
+            </select>
+          </label>
+          <div class="row" style="margin-top: 12px;">
+            <button type="submit" id="saveBtn" data-testid="save">Save</button>
+            <button type="button" id="deleteBtn" data-testid="delete">Delete</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script>
+      const state = {
+        id: "",
+        role: "",
+        username: "",
+        qaDelay: 0,
+        qaFail: false,
+        qaFailRate: 0
+      };
+
+      const detailsEl = document.getElementById("details");
+      const detailsErrorEl = document.getElementById("detailsError");
+      const formErrorEl = document.getElementById("formError");
+      const userInfoEl = document.getElementById("userInfo");
+
+      function loadQaSettings() {
+        const saved = JSON.parse(localStorage.getItem("qaSettings") || "{}");
+        state.qaDelay = Number(saved.qaDelay || 0);
+        state.qaFail = Boolean(saved.qaFail);
+        state.qaFailRate = Number(saved.qaFailRate || 0);
+      }
+
+      function apiFetch(url, options = {}) {
+        const headers = Object.assign({}, options.headers || {});
+        if (state.qaDelay > 0) headers["x-qa-delay"] = String(state.qaDelay);
+        if (state.qaFail) headers["x-qa-fail"] = "1";
+        if (state.qaFailRate > 0) headers["x-qa-fail-rate"] = String(state.qaFailRate);
+        return fetch(url, Object.assign({}, options, { headers }));
+      }
+
+      function setAdminUiEnabled(enabled) {
+        document.getElementById("saveBtn").disabled = !enabled;
+        document.getElementById("deleteBtn").disabled = !enabled;
+      }
+
+      async function loadUser() {
+        const res = await apiFetch("/api/me");
+        if (!res.ok) {
+          window.location.href = "/";
+          return;
+        }
+        const data = await res.json();
+        state.role = data.role;
+        state.username = data.username;
+        userInfoEl.textContent = `Signed in as ${data.username} (${data.role})`;
+        setAdminUiEnabled(data.role === "admin");
+      }
+
+      function setFormValues(employee) {
+        document.getElementById("empId").value = employee.id;
+        document.getElementById("empName").value = employee.name;
+        document.getElementById("empEmail").value = employee.email;
+        document.getElementById("empDept").value = employee.dept;
+        document.getElementById("empRole").value = employee.role;
+        document.getElementById("empStatus").value = employee.status;
+      }
+
+      function renderDetails(employee) {
+        detailsEl.innerHTML = `
+          <div><strong>ID:</strong> ${employee.id}</div>
+          <div><strong>Name:</strong> ${employee.name}</div>
+          <div><strong>Email:</strong> ${employee.email}</div>
+          <div><strong>Department:</strong> ${employee.dept}</div>
+          <div><strong>Role:</strong> ${employee.role}</div>
+          <div><strong>Status:</strong> ${employee.status}</div>
+        `;
+      }
+
+      async function loadEmployee() {
+        detailsErrorEl.textContent = "";
+        const res = await apiFetch(`/api/employees/${state.id}`);
+        if (res.status === 401) {
+          window.location.href = "/";
+          return;
+        }
+        if (!res.ok) {
+          detailsErrorEl.textContent = "Employee not found";
+          return;
+        }
+        const data = await res.json();
+        renderDetails(data);
+        setFormValues(data);
+      }
+
+      document.getElementById("editForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        formErrorEl.textContent = "";
+
+        if (state.role !== "admin") {
+          formErrorEl.textContent = "Admin role required";
+          return;
+        }
+
+        const payload = {
+          id: document.getElementById("empId").value.trim(),
+          name: document.getElementById("empName").value.trim(),
+          email: document.getElementById("empEmail").value.trim(),
+          dept: document.getElementById("empDept").value.trim(),
+          role: document.getElementById("empRole").value.trim(),
+          status: document.getElementById("empStatus").value
+        };
+
+        const res = await apiFetch(`/api/employees/${state.id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          formErrorEl.textContent = data.error || "Save failed";
+          return;
+        }
+
+        state.id = payload.id;
+        window.history.replaceState(null, "", `/employees/${payload.id}`);
+        loadEmployee();
+      });
+
+      document.getElementById("deleteBtn").addEventListener("click", async () => {
+        if (state.role !== "admin") {
+          formErrorEl.textContent = "Admin role required";
+          return;
+        }
+        if (!confirm(`Delete ${state.id}?`)) return;
+        const res = await apiFetch(`/api/employees/${state.id}`, { method: "DELETE" });
+        if (!res.ok) {
+          formErrorEl.textContent = "Delete failed";
+          return;
+        }
+        window.location.href = "/employees";
+      });
+
+      document.getElementById("logoutBtn").addEventListener("click", async () => {
+        await apiFetch("/api/logout", { method: "POST" });
+        window.location.href = "/";
+      });
+
+      state.id = window.location.pathname.split("/").pop();
+      loadQaSettings();
+      loadUser();
+      loadEmployee();
+    </script>
+  </body>
+</html>
+

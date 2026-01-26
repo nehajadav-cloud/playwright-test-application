@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employee Portal - Login</title>
+    <style>
+      body { font-family: Arial, sans-serif; margin: 40px; color: #222; background: #f6f7fb; }
+      .card { max-width: 460px; padding: 24px; border: 1px solid #ddd; border-radius: 10px; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+      label { display: block; margin-top: 12px; font-weight: 600; }
+      input[type="text"], input[type="password"] { width: 100%; padding: 8px; margin-top: 6px; }
+      button { margin-top: 16px; padding: 10px 14px; }
+      .error { color: #b00020; margin-top: 12px; }
+      .hint { margin-top: 16px; font-size: 13px; color: #555; }
+      .row { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+    </style>
+  </head>
+  <body>
+    <div class="card" data-testid="login-card">
+      <h1>Employee Portal</h1>
+      <p>Sign in to continue.</p>
+      <form id="loginForm" data-testid="login-form">
+        <label for="username">Username</label>
+        <input id="username" name="username" type="text" autocomplete="username" required data-testid="login-username" />
+
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" required data-testid="login-password" />
+
+        <label class="row">
+          <input id="remember" name="remember" type="checkbox" data-testid="login-remember" />
+          Remember me (7 days)
+        </label>
+
+        <button type="submit" data-testid="login-submit">Login</button>
+        <div id="error" class="error" role="alert" data-testid="login-error"></div>
+      </form>
+
+      <div class="hint" data-testid="login-hint">
+        Test accounts: admin/admin123 (admin), viewer/viewer123 (viewer)
+      </div>
+    </div>
+
+    <script>
+      const form = document.getElementById("loginForm");
+      const errorEl = document.getElementById("error");
+
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        errorEl.textContent = "";
+
+        const payload = {
+          username: document.getElementById("username").value.trim(),
+          password: document.getElementById("password").value,
+          remember: document.getElementById("remember").checked
+        };
+
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          window.location.href = "/employees";
+          return;
+        }
+
+        const data = await res.json().catch(() => ({}));
+        errorEl.textContent = data.error || "Login failed";
+      });
+    </script>
+  </body>
+</html>
+

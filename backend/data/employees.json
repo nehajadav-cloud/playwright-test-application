@@ -1,0 +1,26 @@
+[
+  {
+    "id": "E1001",
+    "name": "Avirat Patel",
+    "email": "ava@company.com",
+    "dept": "Engineering",
+    "role": "Developer",
+    "status": "Active"
+  },
+  {
+    "id": "E1002",
+    "name": "Noah Kim",
+    "email": "noah@company.com",
+    "dept": "Finance",
+    "role": "Analyst",
+    "status": "Active"
+  },
+  {
+    "id": "E1003",
+    "name": "Mia Singh",
+    "email": "mia@company.com",
+    "dept": "HR",
+    "role": "Recruiter",
+    "status": "Inactive"
+  }
+]

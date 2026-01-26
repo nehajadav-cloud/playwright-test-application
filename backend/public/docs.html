@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Employee Portal Documentation</title>
+    <style>
+      :root {
+        --bg: #f6f7fb;
+        --card: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --line: #e5e7eb;
+        --accent: #2563eb;
+      }
+      body { font-family: Arial, sans-serif; margin: 28px; color: var(--text); background: var(--bg); }
+      header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+      nav a { margin-right: 12px; }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 16px; box-shadow: 0 6px 18px rgba(0,0,0,0.05); margin-bottom: 16px; }
+      h1, h2 { margin: 0 0 10px 0; }
+      h3 { margin: 16px 0 8px; }
+      code, pre { background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
+      pre { padding: 12px; overflow: auto; }
+      .muted { color: var(--muted); }
+      .grid { display: grid; gap: 16px; grid-template-columns: 1fr 1fr; }
+      @media (max-width: 900px) { .grid { grid-template-columns: 1fr; } }
+      .pill { background: #eef2ff; color: #3730a3; padding: 2px 8px; border-radius: 999px; font-size: 12px; }
+      .toc a { display: block; margin: 4px 0; }
+      .box { border: 1px dashed var(--line); padding: 10px; border-radius: 8px; background: #fafafa; }
+    </style>
+  </head>
+  <body>
+    <header class="card">
+      <div>
+        <h1>Employee Portal Documentation</h1>
+        <div class="muted">Version 1.0.0 | Author: Neha Jadav | Support: neha.jadav@gmail.com</div>
+      </div>
+      <nav>
+        <a href="/" data-testid="docs-home">Home</a>
+        <a href="/employees" data-testid="docs-employees">Employees</a>
+        <a href="/employees/E1001" data-testid="docs-employee">Employee Detail</a>
+      </nav>
+    </header>
+
+    <section class="card">
+      <h2>Quick Start</h2>
+      <pre>npm install
+npm run dev
+# open http://127.0.0.1:3000/</pre>
+      <div class="muted">Test accounts: admin/admin123 (admin), viewer/viewer123 (viewer)</div>
+    </section>
+
+    <section class="grid">
+      <section class="card toc">
+        <h2>Contents</h2>
+        <a href="#features">Features</a>
+        <a href="#navigation">Navigation</a>
+        <a href="#qa">QA Controls</a>
+        <a href="#api">API</a>
+        <a href="#architecture">Architecture</a>
+        <a href="#files">Files</a>
+        <a href="#tests">Playwright Ideas</a>
+        <a href="#snapshots">Snapshots</a>
+      </section>
+
+      <section class="card" id="features">
+        <h2>Features</h2>
+        <ul>
+          <li>Role-based auth: <span class="pill">admin</span> and <span class="pill">viewer</span></li>
+          <li>Employees list: search, filter, sort, pagination</li>
+          <li>Create, edit, delete, bulk actions (admin only)</li>
+          <li>Employee detail page with edit/delete</li>
+          <li>QA toggles: latency, forced failure, failure rate</li>
+          <li>Rich test hooks via <code>data-testid</code></li>
+        </ul>
+      </section>
+    </section>
+
+    <section class="card" id="navigation">
+      <h2>Navigation</h2>
+      <ul>
+        <li><code>/</code> Login page</li>
+        <li><code>/employees</code> Employees list</li>
+        <li><code>/employees/:id</code> Employee detail page</li>
+        <li><code>/docs</code> This documentation</li>
+      </ul>
+    </section>
+
+    <section class="card" id="qa">
+      <h2>QA Controls</h2>
+      <p>These controls let you simulate slow or failing APIs in UI tests.</p>
+      <ul>
+        <li><strong>Delay:</strong> adds latency to all <code>/api</code> calls</li>
+        <li><strong>Fail:</strong> forces a 503 response</li>
+        <li><strong>Fail rate:</strong> random failures (0-1)</li>
+      </ul>
+      <div class="box">
+        You can also set headers manually in tests:
+        <pre>x-qa-delay: 1000
+x-qa-fail: 1
+x-qa-fail-rate: 0.3</pre>
+      </div>
+    </section>
+
+    <section class="card" id="api">
+      <h2>API</h2>
+      <h3>Auth</h3>
+      <ul>
+        <li><code>POST /api/login</code> body: <code>{ username, password, remember }</code></li>
+        <li><code>POST /api/logout</code></li>
+        <li><code>GET /api/me</code></li>
+      </ul>
+      <h3>Employees</h3>
+      <ul>
+        <li><code>GET /api/employees?q=&amp;status=&amp;sortBy=&amp;sortDir=&amp;page=&amp;pageSize=</code></li>
+        <li><code>GET /api/employees/:id</code></li>
+        <li><code>POST /api/employees</code> (admin)</li>
+        <li><code>PUT /api/employees/:id</code> (admin)</li>
+        <li><code>DELETE /api/employees/:id</code> (admin)</li>
+        <li><code>POST /api/employees/bulk</code> (admin)</li>
+      </ul>
+    </section>
+
+    <section class="card" id="architecture">
+      <h2>Architecture</h2>
+      <ul>
+        <li>Node/Express backend serves API and static HTML</li>
+        <li>In-memory sessions with cookie-based auth</li>
+        <li>Employee data stored in <code>backend/data/employees.json</code></li>
+        <li>Static UI pages in <code>backend/public</code></li>
+      </ul>
+    </section>
+
+    <section class="card" id="files">
+      <h2>Files</h2>
+      <ul>
+        <li><code>backend/server.js</code> Express server and API routes</li>
+        <li><code>backend/public/login.html</code> Login UI</li>
+        <li><code>backend/public/employees.html</code> Employees list UI</li>
+        <li><code>backend/public/employee.html</code> Employee detail UI</li>
+        <li><code>backend/public/docs.html</code> Documentation (this page)</li>
+      </ul>
+    </section>
+
+    <section class="card" id="tests">
+      <h2>Playwright Ideas</h2>
+      <ul>
+        <li>Login success and failure flows</li>
+        <li>Role restriction: viewer cannot create/edit/delete</li>
+        <li>Pagination and sorting assertions</li>
+        <li>Search and filter accuracy</li>
+        <li>Bulk actions with confirmation dialogs</li>
+        <li>Failure simulation and retries</li>
+      </ul>
+    </section>
+
+    <section class="card" id="snapshots">
+      <h2>Snapshots</h2>
+      <p>Add screenshots here as you build tests.</p>
+      <div class="box">
+        <div>Login page screenshot: <em>docs/login.png</em></div>
+        <div>Employees list screenshot: <em>docs/employees.png</em></div>
+        <div>Employee detail screenshot: <em>docs/employee.png</em></div>
+      </div>
+    </section>
+  </body>
+</html>
