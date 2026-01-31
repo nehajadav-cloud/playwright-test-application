@@ -11,7 +11,8 @@
     "test:headed": "playwright test --headed",
     "test:qa": "node scripts/run-qa-suite.js",
     "test:qa:headful": "set HEADFUL=1 && node scripts/run-qa-suite.js",
-    "test:qa:headless": "set HEADFUL=0 && node scripts/run-qa-suite.js"
+    "test:qa:headless": "set HEADFUL=0 && node scripts/run-qa-suite.js",
+    "demo": "node scripts/demo-mode.js"
   },
   "keywords": [],
   "author": "Neha Jadav",
