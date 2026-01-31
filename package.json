@@ -4,11 +4,14 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "dev": "nodemon backend/server.js",
+    "dev": "nodemon --ignore backend/data/* backend/server.js",
     "start": "node backend/server.js",
     "test": "playwright test",
     "test:ui": "playwright test --ui",
-    "test:headed": "playwright test --headed"
+    "test:headed": "playwright test --headed",
+    "test:qa": "node scripts/run-qa-suite.js",
+    "test:qa:headful": "set HEADFUL=1 && node scripts/run-qa-suite.js",
+    "test:qa:headless": "set HEADFUL=0 && node scripts/run-qa-suite.js"
   },
   "keywords": [],
   "author": "Neha Jadav",

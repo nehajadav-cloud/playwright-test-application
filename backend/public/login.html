@@ -19,15 +19,15 @@
     <h3>Login</h3>
 
     <label>Username
-      <input id="username" aria-label="Username" />
+      <input id="username" aria-label="Username" data-testid="login-username" />
     </label>
 
     <label>Password
-      <input id="password" type="password" aria-label="Password" />
+      <input id="password" type="password" aria-label="Password" data-testid="login-password" />
     </label>
 
-    <button id="loginBtn">Sign in</button>
-    <div class="error" id="err"></div>
+    <button id="loginBtn" data-testid="login-submit">Sign in</button>
+    <div class="error" id="err" data-testid="login-error"></div>
 
     <p style="color:#555;margin-top:10px;">
       Use: <b>admin</b> / <b>admin123</b>
